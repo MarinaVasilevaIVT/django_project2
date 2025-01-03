@@ -3,7 +3,7 @@
 
 ### 1. Создадим форму для добавления опросов зарегистрированным пользователям:
 
-polls/forms.py
+```polls/forms.py```
 
 ```python
 from django import forms
@@ -19,7 +19,7 @@ class PollForm(forms.ModelForm):
 
 Тогда нам нужно создать представление, которое будет обрабатывать форму для создания опроса и добавления вариантов
 
-polls/views.py примет вид:
+```polls/views.py``` примет вид:
 
 ```python
 from django.db.models import F
@@ -54,7 +54,6 @@ def vote(request, question_id):
     try:
         selected_choice = question.choice_set.get(pk=request.POST["choice"])
     except (KeyError, Choice.DoesNotExist):
-        # Redisplay the question voting form.
         return render(
             request,
             "polls/detail.html",
@@ -66,9 +65,6 @@ def vote(request, question_id):
     else:
         selected_choice.votes = F("votes") + 1
         selected_choice.save()
-        # Always return an HttpResponseRedirect after successfully dealing
-        # with POST data. This prevents data from being posted twice if a
-        # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
 
 @login_required
@@ -76,24 +72,22 @@ def create_poll(request):
     if request.method == 'POST':
         form = PollForm(request.POST)
         if form.is_valid():
-            # Сохраняем вопрос
             question = form.save(commit=False)
-            question.pub_date = timezone.now()  # Устанавливаем дату публикации вручную
+            question.pub_date = timezone.now()
             question.save()
             
-            # Получаем варианты ответов
             choices = request.POST.get('choices').splitlines()
             for choice_text in choices:
-                if choice_text.strip():  # Проверка на пустые строки
+                if choice_text.strip():
                     Choice.objects.create(question=question, choice_text=choice_text.strip())
-            return redirect('polls:index')  # После создания опроса перенаправляем на главную страницу
+            return redirect('polls:index') 
     else:
         form = PollForm()
     return render(request, 'polls/create_poll.html', {'form': form})
 
 ```
 
-Далее добавим маршруты для новой страницы с формой создания опроса в файл polls/urls.py:
+Далее добавим маршруты для новой страницы с формой создания опроса в файл ```polls/urls.py```:
 
 ```python
 from django.urls import path
@@ -119,7 +113,7 @@ urlpatterns = [
 
 ### 2. Теперь перейдем к созданию шаблонов. Для начала создадим базовый шаблон, от которого все будет наследоваться, в моем случае это base_generic.html. 
 
-polls/base_generic.html будет иметь вид:
+```polls/base_generic.html``` будет иметь вид:
 
 ```html
 <!DOCTYPE html>
@@ -129,16 +123,14 @@ polls/base_generic.html будет иметь вид:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Polls{% endblock %}</title>
-    <!-- Подключение Bootstrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Ваши кастомные стили -->
     <style>
         body {
             background-image: url("{% static 'polls/images/back.png' %}");
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            color: #000000; /* Чтобы текст был читаемым на фоне */
+            color: #000000; 
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -159,7 +151,7 @@ polls/base_generic.html будет иметь вид:
         {% endblock %}
     </div>
 
-    <!-- Подключение Bootstrap JS (если нужно) -->
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -167,7 +159,7 @@ polls/base_generic.html будет иметь вид:
 </html>
 
 ```
-Шаблон для создания опроса пользователями polls/create_poll.html
+Шаблон для создания опроса пользователями ```polls/create_poll.html```
 
 ```html
 {% extends 'polls/base_generic.html' %}
@@ -186,7 +178,7 @@ polls/base_generic.html будет иметь вид:
 
 ```
 
-### 3. Перейдем к аутентификации. Настроим маршруты для этого, добавив в polls/urls.py, следующий код:
+### 3. Перейдем к аутентификации. Настроим маршруты для этого, добавив в ```polls/urls.py```, следующий код:
 
 ```python
 urlpatterns = [
@@ -216,7 +208,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('polls:index')  # Перенаправление на главную страницу после регистрации
+            return redirect('polls:index') 
     else:
         form = UserCreationForm()
     return render(request, 'polls/register.html', {'form': form})
@@ -228,7 +220,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('polls:index')  # Перенаправление на главную страницу после входа
+            return redirect('polls:index')
     else:
         form = AuthenticationForm()
     return render(request, 'polls/login.html', {'form': form})
@@ -236,13 +228,13 @@ def login_view(request):
 # Представление для выхода
 def logout_view(request):
     logout(request)
-    return redirect('polls:index')  # Перенаправление на главную страницу после выхода
+    return redirect('polls:index') 
 
 ```
 
-Теперь создадим шаблоны для регистрации, входа и выхода в polls/templates/polls/:
+Теперь создадим шаблоны для регистрации, входа и выхода в ```polls/templates/polls/```:
 
-* register.html:
+* ```register.html```:
 
 ```html
 {% extends 'polls/base_generic.html' %}
@@ -257,7 +249,7 @@ def logout_view(request):
 {% endblock %}
 ```
 
-* login.html:
+* ```login.html```:
 
 ```html
 {% extends 'polls/base_generic.html' %}
@@ -294,3 +286,5 @@ def logout_view(request):
 ![6](images/6.png)
 ![7](images/7.png)
 ![8](images/8.png)
+
+Полный код и содержание веб-приложения представлены в ветке [master](https://github.com/MarinaVasilevaIVT/django_project2/tree/master)
